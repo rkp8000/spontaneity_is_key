@@ -5,9 +5,12 @@ from __future__ import division, print_function
 from matplotlib import gridspec
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy import stats
+
 plt.style.use('ggplot')
 
 import data_io
+import metrics
 import munging
 from plot import set_fontsize
 
@@ -47,19 +50,29 @@ def down_sampled_interval_variation_vs_chance(
     ts = np.arange(spike_probs.shape[1]) * DT_ORIGINAL
     ts_down_sampled = ts[np.round((t_start_idxs + t_end_idxs) / 2).astype(int)]
 
+    # calculate inter-spike interval coefficients of variation
+
+    isis = np.array([
+        metrics.inter_spike_intervals(spike_train, DT_ORIGINAL*down_sample_factor)
+        for spike_train in spike_trains_down_sampled
+    ])
+
+    cvs = np.array([
+        stats.variation(isi) if len(isi) > 1 else np.nan for isi in isis
+    ])
+
 
     ## MAKE PLOTS
 
     fig = plt.figure(facecolor='white', figsize=FIG_SIZE, tight_layout=True)
-    gs = gridspec.GridSpec(6, 1)
+    gs = gridspec.GridSpec(9, 1)
     axs = []
 
     axs.append(fig.add_subplot(gs[0]))
-    axs.append(fig.add_subplot(gs[1:]))
+    axs.append(fig.add_subplot(gs[1:6]))
+    axs.append(fig.add_subplot(gs[6:]))
 
     # plot example spike probability and its down-sampled version
-
-    # plot original probabilities and spikes
 
     ts_currents = [ts, ts_down_sampled]
     spike_probs_currents = [spike_probs, spike_probs_down_sampled]
@@ -114,6 +127,19 @@ def down_sampled_interval_variation_vs_chance(
 
     axs[1].set_xlabel('time (s)')
     axs[1].set_ylabel('cell')
+
+    # plot distribution of coefficients of variation
+
+    cell_idxs = np.arange(len(spike_trains))
+
+    axs[2].scatter(cell_idxs, cvs, s=50, marker='d', c='r')
+
+    axs[2].axhline(1, c='gray', ls='--', lw=1)
+
+    axs[2].set_xlim(-1, len(cell_idxs))
+
+    axs[2].set_xlabel('cell')
+    axs[2].set_ylabel('coefficient of variation')
 
     for ax in axs:
 
