@@ -30,12 +30,13 @@ def down_sampled_interval_variation_vs_chance(
 
     ## PERFORM ANALYSIS
 
+    np.random.seed(SEED)
+
     # load data
 
     data_loader = data_io.DataLoader(DATA_DIRECTORY)
 
     spike_probs = data_loader.foopsi(DATA_FILENAME)
-    spike_trains = spike_probs >= SPIKE_THRESHOLD
 
     # calculate down-sample factor (number of time steps)
 
@@ -43,7 +44,18 @@ def down_sampled_interval_variation_vs_chance(
 
     spike_probs_down_sampled, t_start_idxs, t_end_idxs = munging.down_sample_spike_probabilities(
         spike_probs, down_sample_factor)
-    spike_trains_down_sampled = spike_probs_down_sampled >= SPIKE_THRESHOLD
+
+    # create spike trains
+
+    if SPIKE_THRESHOLD != 'random':
+
+        spike_trains = spike_probs >= SPIKE_THRESHOLD
+        spike_trains_down_sampled = spike_probs_down_sampled >= SPIKE_THRESHOLD
+
+    else:
+
+        spike_trains = spike_probs > np.random.rand(*spike_probs.shape)
+        spike_trains_down_sampled = spike_probs_down_sampled > np.random.rand(*spike_probs_down_sampled.shape)
 
     # make time vectors
 
@@ -140,6 +152,10 @@ def down_sampled_interval_variation_vs_chance(
 
     axs[2].set_xlabel('cell')
     axs[2].set_ylabel('coefficient of variation')
+
+    print('mean coefficient of variation: {}'.format(np.mean(cvs)))
+    print('std coefficient of variation: {}'.format(np.std(cvs)))
+    print('sem coefficeint of variation: {}'.format(stats.sem(cvs)))
 
     for ax in axs:
 
