@@ -2,7 +2,7 @@ from __future__ import division
 import numpy as np
 import unittest
 
-
+import metrics
 import munging
 
 
@@ -33,6 +33,20 @@ class MungingTestCase(unittest.TestCase):
         np.testing.assert_array_almost_equal(spike_probs_down_sampled, spike_probs_down_sampled_correct)
         np.testing.assert_array_equal(t_starts, t_starts_correct)
         np.testing.assert_array_equal(t_ends, t_ends_correct)
+
+
+class MetricsTestCase(unittest.TestCase):
+
+    def test_inter_spike_intervals_works_correctly_on_example(self):
+
+        spike_train = np.array([0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1])
+        dt = 0.5
+        isi_correct = np.array([3, 1, 4, 2, 2]) / 2
+
+        isi = metrics.inter_spike_intervals(spike_train, dt)
+
+        np.testing.assert_array_equal(isi, isi_correct)
+
 
 if __name__ == '__main__':
 
